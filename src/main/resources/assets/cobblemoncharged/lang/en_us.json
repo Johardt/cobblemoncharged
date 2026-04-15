@@ -1,8 +1,4 @@
 {
-  "itemGroup.cobblemoncharged": "Example Mod Tab",
-  "block.cobblemoncharged.example_block": "Example Block",
-  "item.cobblemoncharged.example_item": "Example Item",
-
   "cobblemoncharged.configuration.title": "Cobblemon: Charged Configs",
   "cobblemoncharged.configuration.section.cobblemoncharged.common.toml": "Cobblemon: Charged Configs",
   "cobblemoncharged.configuration.section.cobblemoncharged.common.toml.title": "Cobblemon: Charged Configs",
