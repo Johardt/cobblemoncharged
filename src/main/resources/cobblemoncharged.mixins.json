@@ -2,7 +2,9 @@
   "required": true,
   "package": "me.johardt.mixin",
   "compatibilityLevel": "JAVA_21",
-  "mixins": [],
+  "mixins": [
+    "HealingMachineBlockEntityMixin"
+  ],
   "injectors": {
     "defaultRequire": 1
   },
