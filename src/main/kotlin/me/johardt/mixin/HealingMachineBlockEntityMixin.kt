@@ -17,7 +17,6 @@ import net.neoforged.neoforge.energy.IEnergyStorage
 import org.spongepowered.asm.mixin.Mixin
 import org.spongepowered.asm.mixin.Shadow
 import org.spongepowered.asm.mixin.Unique
-import org.spongepowered.asm.mixin.gen.Accessor
 import org.spongepowered.asm.mixin.gen.Invoker
 import org.spongepowered.asm.mixin.injection.At
 import org.spongepowered.asm.mixin.injection.Inject
@@ -37,7 +36,7 @@ abstract class HealingMachineBlockEntityMixin(
     state: BlockState
 ) : BlockEntity(type, pos, state), PoweredHealingMachine {
     @field:Unique
-    private var `cobblemonCharged$energyStorage`: HealingMachineEnergyStorage? = null
+    private var chargedEnergyStorage: ChargedEnergyStorage? = null
 
     @Shadow(remap = false)
     abstract fun getMaxCharge(): Float
@@ -45,66 +44,66 @@ abstract class HealingMachineBlockEntityMixin(
     @Shadow(remap = false)
     abstract fun setHealingCharge(healingCharge: Float)
 
+    @Shadow(remap = false)
+    abstract fun getInfinite(): Boolean
+
     @Invoker(value = "updateRedstoneSignal", remap = false)
-    protected abstract fun `cobblemonCharged$invokeUpdateRedstoneSignal`()
+    protected abstract fun invokeUpdateRedstoneSignal()
 
     @Invoker(value = "updateBlockChargeLevel", remap = false)
-    protected abstract fun `cobblemonCharged$invokeUpdateBlockChargeLevel`(chargeLevel: Int?)
-
-    @Accessor(value = "infinite", remap = false)
-    protected abstract fun `cobblemonCharged$getInfinite`(): Boolean
+    protected abstract fun invokeUpdateBlockChargeLevel(chargeLevel: Int?)
 
     @Inject(method = ["<init>"], at = [At("TAIL")])
-    private fun `cobblemonCharged$initEnergy`(pos: BlockPos, state: BlockState, ci: CallbackInfo) {
-        `cobblemonCharged$energyStorage` = HealingMachineEnergyStorage(
-            capacity = `cobblemonCharged$getEnergyCapacity`(),
+    private fun initEnergy(pos: BlockPos, state: BlockState, ci: CallbackInfo) {
+        chargedEnergyStorage = ChargedEnergyStorage(
+            capacity = getEnergyCapacity(),
             onChanged = {
-                `cobblemonCharged$syncDisplayedCharge`()
+                syncDisplayedCharge()
                 setChanged()
             }
         )
     }
 
-    @Inject(method = ["loadAdditional", "method_11014"], at = [At("TAIL")], remap = false)
-    private fun `cobblemonCharged$readEnergy`(
+    @Inject(method = ["loadAdditional"], at = [At("TAIL")], remap = false)
+    private fun readEnergy(
         tag: CompoundTag,
         registries: HolderLookup.Provider,
         ci: CallbackInfo
     ) {
-        val energyStorage = `cobblemonCharged$getInternalEnergyStorage`()
+        val energyStorage = getChargedEnergyStorage()
         energyStorage.setStoredEnergy(tag.getInt(COBBLEMON_CHARGED_ENERGY_KEY))
-        `cobblemonCharged$syncDisplayedCharge`()
+        syncDisplayedCharge()
     }
 
-    @Inject(method = ["saveAdditional", "method_11007"], at = [At("TAIL")], remap = false)
-    private fun `cobblemonCharged$writeEnergy`(
+    @Inject(method = ["saveAdditional"], at = [At("TAIL")], remap = false)
+    private fun writeEnergy(
         tag: CompoundTag,
         registries: HolderLookup.Provider,
         ci: CallbackInfo
     ) {
-        tag.putInt(COBBLEMON_CHARGED_ENERGY_KEY, `cobblemonCharged$getInternalEnergyStorage`().energyStored)
+        tag.putInt(COBBLEMON_CHARGED_ENERGY_KEY, getChargedEnergyStorage().energyStored)
     }
 
     @Inject(method = ["canHeal"], at = [At("HEAD")], cancellable = true, remap = false)
-    private fun `cobblemonCharged$checkEnergyForHealing`(
+    private fun checkEnergyForHealing(
         party: PartyStore,
         cir: CallbackInfoReturnable<Boolean>
     ) {
-        cir.returnValue = `cobblemonCharged$canHealWithEnergy`(party)
+        cir.returnValue = canHealWithEnergy(party)
     }
 
     @Inject(method = ["activate"], at = [At("HEAD")], cancellable = true, remap = false)
-    private fun `cobblemonCharged$consumeEnergy`(user: UUID, party: PartyStore, ci: CallbackInfo) {
-        if (Cobblemon.config.infiniteHealerCharge || `cobblemonCharged$getInfinite`()) {
+    private fun consumeEnergy(user: UUID, party: PartyStore, ci: CallbackInfo) {
+        if (Cobblemon.config.infiniteHealerCharge || getInfinite()) {
             return
         }
 
-        val energyCost = `cobblemonCharged$getEnergyCost`(party)
+        val energyCost = getEnergyCost(party)
         if (energyCost <= 0) {
             return
         }
 
-        val extracted = `cobblemonCharged$getInternalEnergyStorage`().extractInternally(energyCost)
+        val extracted = getChargedEnergyStorage().extractInternally(energyCost)
         if (extracted != energyCost) {
             CobblemonCharged.LOGGER.warn(
                 "Healing machine at {} was blocked because it lacked stored energy (needed {}, extracted {}).",
@@ -117,31 +116,31 @@ abstract class HealingMachineBlockEntityMixin(
     }
 
     @Inject(method = ["activate"], at = [At("TAIL")], remap = false)
-    private fun `cobblemonCharged$resyncAfterActivation`(user: UUID, party: PartyStore, ci: CallbackInfo) {
-        `cobblemonCharged$syncDisplayedCharge`()
+    private fun resyncAfterActivation(user: UUID, party: PartyStore, ci: CallbackInfo) {
+        syncDisplayedCharge()
     }
 
-    override fun `cobblemonCharged$getEnergyStorage`(): IEnergyStorage {
-        return `cobblemonCharged$getInternalEnergyStorage`()
+    override fun getEnergyStorage(): IEnergyStorage {
+        return getChargedEnergyStorage()
     }
 
     @Unique
-    private fun `cobblemonCharged$getInternalEnergyStorage`(): HealingMachineEnergyStorage {
-        return `cobblemonCharged$energyStorage`
+    private fun getChargedEnergyStorage(): ChargedEnergyStorage {
+        return chargedEnergyStorage
             ?: error("Healing machine energy storage was not initialized")
     }
 
     @Unique
-    protected fun `cobblemonCharged$canHealWithEnergy`(party: PartyStore): Boolean {
-        if (Cobblemon.config.infiniteHealerCharge || `cobblemonCharged$getInfinite`()) {
+    private fun canHealWithEnergy(party: PartyStore): Boolean {
+        if (Cobblemon.config.infiniteHealerCharge || getInfinite()) {
             return true
         }
 
-        return `cobblemonCharged$getInternalEnergyStorage`().energyStored >= `cobblemonCharged$getEnergyCost`(party)
+        return getChargedEnergyStorage().energyStored >= getEnergyCost(party)
     }
 
     @Unique
-    protected fun `cobblemonCharged$getEnergyCapacity`(): Int {
+    private fun getEnergyCapacity(): Int {
         return ceil(getMaxCharge().toDouble() * COBBLEMON_CHARGED_ENERGY_PER_CHARGE.toDouble())
             .coerceAtLeast(1.0)
             .coerceAtMost(Int.MAX_VALUE.toDouble())
@@ -149,7 +148,7 @@ abstract class HealingMachineBlockEntityMixin(
     }
 
     @Unique
-    protected fun `cobblemonCharged$getEnergyCost`(party: PartyStore): Int {
+    private fun getEnergyCost(party: PartyStore): Int {
         val healingRemainder = party.getHealingRemainderPercent().coerceAtLeast(0.0F)
         return ceil(healingRemainder.toDouble() * COBBLEMON_CHARGED_ENERGY_PER_CHARGE.toDouble())
             .coerceAtLeast(0.0)
@@ -158,19 +157,19 @@ abstract class HealingMachineBlockEntityMixin(
     }
 
     @Unique
-    protected fun `cobblemonCharged$syncDisplayedCharge`() {
+    override fun syncDisplayedCharge() {
         val currentLevel = level ?: return
         if (currentLevel.isClientSide) {
             return
         }
 
-        val displayedCharge = `cobblemonCharged$getInternalEnergyStorage`().energyStored.toFloat() / COBBLEMON_CHARGED_ENERGY_PER_CHARGE
+        val displayedCharge = getChargedEnergyStorage().energyStored.toFloat() / COBBLEMON_CHARGED_ENERGY_PER_CHARGE
         setHealingCharge(min(getMaxCharge(), displayedCharge))
-        `cobblemonCharged$invokeUpdateRedstoneSignal`()
-        `cobblemonCharged$invokeUpdateBlockChargeLevel`(null)
+        invokeUpdateRedstoneSignal()
+        invokeUpdateBlockChargeLevel(null)
     }
 
-    private class HealingMachineEnergyStorage(
+    private class ChargedEnergyStorage(
         capacity: Int,
         private val onChanged: () -> Unit
     ) : EnergyStorage(capacity, capacity, 0) {
@@ -206,16 +205,15 @@ abstract class HealingMachineBlockEntityMixin(
 
     private companion object {
         @JvmStatic
-        @Suppress("CAST_NEVER_SUCCEEDS")
         @Inject(method = ["TICKER\$lambda\$0"], at = [At("TAIL")], remap = false)
-        private fun `cobblemonCharged$syncTickerCharge`(
+        private fun syncTickerCharge(
             level: Level,
             pos: BlockPos,
             state: BlockState,
             blockEntity: HealingMachineBlockEntity,
             ci: CallbackInfo
         ) {
-            (blockEntity as HealingMachineBlockEntityMixin).`cobblemonCharged$syncDisplayedCharge`()
+            (blockEntity as PoweredHealingMachine).syncDisplayedCharge()
         }
     }
 }
