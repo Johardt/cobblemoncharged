@@ -1,0 +1,17 @@
+{
+  "required": true,
+  "package": "me.johardt.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "HealingMachineBlockEntityMixin",
+    "FossilAnalyzerBlockEntityMixin",
+    "FossilMultiblockStructureMixin",
+    "MultiblockEntityMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "overwrites": {
+    "requireAnnotations": true
+  }
+}
