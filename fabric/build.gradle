@@ -30,7 +30,10 @@ repositories {
     }
 }
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(21)
+    withSourcesJar()
+}
 
 tasks.withType(JavaCompile).configureEach {
     options.release.set(21)
@@ -76,6 +79,34 @@ tasks.named("processResources", ProcessResources) {
     filesMatching("fabric.mod.json") {
         expand(fabricResourceProperties)
     }
+}
+
+tasks.named("jar", Jar) {
+    archiveBaseName.set("${mod_id}-fabric")
+    archiveVersion.set(mod_version)
+    archiveClassifier.set("dev")
+}
+
+tasks.named("remapJar") {
+    archiveBaseName.set("${mod_id}-fabric")
+    archiveVersion.set(mod_version)
+    archiveClassifier.set("")
+}
+
+tasks.named("sourcesJar", Jar) {
+    archiveBaseName.set("${mod_id}-fabric")
+    archiveVersion.set(mod_version)
+    archiveClassifier.set("dev-sources")
+}
+
+tasks.named("remapSourcesJar") {
+    archiveBaseName.set("${mod_id}-fabric")
+    archiveVersion.set(mod_version)
+    archiveClassifier.set("sources")
+}
+
+tasks.named("build") {
+    dependsOn(tasks.named("sourcesJar"))
 }
 
 publishing {
