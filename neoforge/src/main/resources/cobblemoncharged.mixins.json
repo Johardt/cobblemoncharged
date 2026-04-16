@@ -3,7 +3,10 @@
   "package": "me.johardt.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
-    "HealingMachineBlockEntityMixin"
+    "HealingMachineBlockEntityMixin",
+    "FossilAnalyzerBlockEntityMixin",
+    "FossilMultiblockStructureMixin",
+    "MultiblockEntityMixin"
   ],
   "injectors": {
     "defaultRequire": 1

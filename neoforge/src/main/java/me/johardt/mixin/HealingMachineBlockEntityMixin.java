@@ -4,6 +4,7 @@ import com.cobblemon.mod.common.Cobblemon;
 import com.cobblemon.mod.common.api.storage.party.PartyStore;
 import com.cobblemon.mod.common.block.entity.HealingMachineBlockEntity;
 import me.johardt.CobblemonCharged;
+import me.johardt.energy.HealingMachineEnergy;
 import me.johardt.energy.PoweredHealingMachine;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
@@ -27,11 +28,6 @@ import java.util.UUID;
 
 @Mixin(HealingMachineBlockEntity.class)
 public abstract class HealingMachineBlockEntityMixin extends BlockEntity implements PoweredHealingMachine {
-    @Unique
-    private static final String COBBLEMON_CHARGED_ENERGY_KEY = "ChargedEnergy";
-    @Unique
-    private static final int COBBLEMON_CHARGED_ENERGY_PER_CHARGE = 4_000;
-
     @Unique
     private ChargedEnergyStorage cobblemoncharged_neoforge$chargedEnergyStorage;
 
@@ -65,13 +61,13 @@ public abstract class HealingMachineBlockEntityMixin extends BlockEntity impleme
     @Inject(method = "loadAdditional", at = @At("TAIL"), remap = false)
     private void readEnergy(CompoundTag tag, HolderLookup.Provider registries, CallbackInfo ci) {
         ChargedEnergyStorage energyStorage = cobblemoncharged_neoforge$getChargedEnergyStorage();
-        energyStorage.setStoredEnergy(tag.getInt(COBBLEMON_CHARGED_ENERGY_KEY));
+        energyStorage.setStoredEnergy(tag.getInt(HealingMachineEnergy.NBT_KEY));
         syncDisplayedCharge();
     }
 
     @Inject(method = "saveAdditional", at = @At("TAIL"), remap = false)
     private void writeEnergy(CompoundTag tag, HolderLookup.Provider registries, CallbackInfo ci) {
-        tag.putInt(COBBLEMON_CHARGED_ENERGY_KEY, cobblemoncharged_neoforge$getChargedEnergyStorage().getEnergyStored());
+        tag.putInt(HealingMachineEnergy.NBT_KEY, cobblemoncharged_neoforge$getChargedEnergyStorage().getEnergyStored());
     }
 
     @Inject(method = "canHeal", at = @At("HEAD"), cancellable = true, remap = false)
@@ -120,7 +116,7 @@ public abstract class HealingMachineBlockEntityMixin extends BlockEntity impleme
             return;
         }
 
-        float displayedCharge = (float) cobblemoncharged_neoforge$getChargedEnergyStorage().getEnergyStored() / COBBLEMON_CHARGED_ENERGY_PER_CHARGE;
+        float displayedCharge = HealingMachineEnergy.displayedCharge(cobblemoncharged_neoforge$getChargedEnergyStorage().getEnergyStored());
         setHealingCharge(Math.min(getMaxCharge(), displayedCharge));
         invokeUpdateRedstoneSignal();
         invokeUpdateBlockChargeLevel(null);
@@ -145,13 +141,12 @@ public abstract class HealingMachineBlockEntityMixin extends BlockEntity impleme
 
     @Unique
     private int cobblemoncharged_neoforge$getEnergyCapacity() {
-        return (int) Math.clamp(Math.ceil(getMaxCharge() * COBBLEMON_CHARGED_ENERGY_PER_CHARGE), 1D, Integer.MAX_VALUE);
+        return HealingMachineEnergy.energyCapacity(getMaxCharge());
     }
 
     @Unique
     private int cobblemoncharged_neoforge$getEnergyCost(PartyStore party) {
-        float healingRemainder = Math.max(0.0F, party.getHealingRemainderPercent());
-        return (int) Math.clamp(Math.ceil(healingRemainder * COBBLEMON_CHARGED_ENERGY_PER_CHARGE), 0D, Integer.MAX_VALUE);
+        return HealingMachineEnergy.energyCost(party.getHealingRemainderPercent());
     }
 
     @Inject(method = "TICKER$lambda$0", at = @At("TAIL"), remap = false)
@@ -169,7 +164,7 @@ public abstract class HealingMachineBlockEntityMixin extends BlockEntity impleme
         }
 
         private void setStoredEnergy(int amount) {
-            energy = Math.clamp(amount, 0, capacity);
+            energy = HealingMachineEnergy.clampStoredEnergy(amount, capacity);
         }
 
         private int extractInternally(int amount) {
