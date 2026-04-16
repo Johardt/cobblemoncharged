@@ -1,0 +1,92 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+    id 'fabric-loom' version '1.10.5'
+}
+
+base {
+    archivesName = "${mod_id}-fabric"
+}
+
+sourceSets.main.resources.srcDir('../common/src/main/resources')
+sourceSets.main.java.srcDir('../common/src/main/java')
+
+repositories {
+    mavenCentral()
+
+    maven {
+        name = 'Fabric'
+        url = uri('https://maven.fabricmc.net/')
+    }
+
+    maven {
+        name = 'GeckoLib'
+        url = uri("https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/")
+    }
+
+    maven {
+        name = 'Shedaniel'
+        url = uri('https://maven.shedaniel.me/')
+    }
+}
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+
+tasks.withType(JavaCompile).configureEach {
+    options.release.set(21)
+}
+
+loom {
+    mods {
+        "${mod_id}" {
+            sourceSet sourceSets.main
+        }
+    }
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:$minecraft_version"
+    mappings loom.officialMojangMappings()
+    modImplementation "net.fabricmc:fabric-loader:$loader_version"
+
+    modImplementation "net.fabricmc.fabric-api:fabric-api:$fabric_api_version"
+    modImplementation "net.fabricmc:fabric-language-kotlin:$fabric_kotlin_version"
+
+    modImplementation "com.cobblemon:fabric:$cobblemon_version"
+    modApi "teamreborn:energy:$energy_version"
+}
+
+def fabricResourceProperties = [
+    version            : project.version.toString(),
+    mod_id             : mod_id,
+    mod_name           : mod_name,
+    mod_authors        : mod_authors,
+    mod_description    : mod_description,
+    mod_icon_path      : mod_icon_path,
+    mod_license        : mod_license,
+    cobblemon_version_predicate: cobblemon_version_predicate,
+    minecraft_version  : minecraft_version,
+    loader_version     : loader_version,
+    fabric_api_version : fabric_api_version,
+]
+
+tasks.named("processResources", ProcessResources) {
+    inputs.properties(fabricResourceProperties)
+
+    filesMatching("fabric.mod.json") {
+        expand(fabricResourceProperties)
+    }
+}
+
+publishing {
+    publications {
+        register('mavenJava', MavenPublication) {
+            from components.java
+        }
+    }
+    repositories {
+        maven {
+            url = rootProject.layout.projectDirectory.dir('repo').asFile.toURI()
+        }
+    }
+}
