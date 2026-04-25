@@ -66,8 +66,9 @@ public abstract class FossilMultiblockStructureMixin {
         }
 
         try (Transaction transaction = Transaction.openOuter()) {
-            long extracted = analyzer.getEnergyStorage().extract(FossilAnalyzerEnergy.ENERGY_PER_RESTORATION_TICK, transaction);
-            if (extracted == FossilAnalyzerEnergy.ENERGY_PER_RESTORATION_TICK) {
+            long energyPerTick = FossilAnalyzerEnergy.energyPerRestorationTick();
+            long extracted = analyzer.getEnergyStorage().extract(energyPerTick, transaction);
+            if (extracted == energyPerTick) {
                 transaction.commit();
                 if (analyzer.setRestorationPowered(true)) {
                     updateOnStatus(level);

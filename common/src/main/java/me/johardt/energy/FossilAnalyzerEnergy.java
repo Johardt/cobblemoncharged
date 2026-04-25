@@ -2,19 +2,19 @@ package me.johardt.energy;
 
 import com.cobblemon.mod.common.CobblemonBlocks;
 import com.cobblemon.mod.common.block.multiblock.FossilMultiblockStructure;
+import me.johardt.CobblemonChargedConfig;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.block.state.BlockState;
 
 public final class FossilAnalyzerEnergy {
     public static final String NBT_ENERGY_KEY = "ChargedFossilEnergy";
     public static final String NBT_POWERED_KEY = "ChargedFossilPowered";
-    public static final long ENERGY_PER_RESTORATION_TICK = 20L;
 
     private FossilAnalyzerEnergy() {
     }
 
     public static long capacity() {
-        return (long) FossilMultiblockStructure.TIME_TO_TAKE * ENERGY_PER_RESTORATION_TICK;
+        return (long) FossilMultiblockStructure.TIME_TO_TAKE * energyPerRestorationTick();
     }
 
     public static int capacityInt() {
@@ -22,7 +22,12 @@ public final class FossilAnalyzerEnergy {
     }
 
     public static int energyPerRestorationTickInt() {
-        return Math.toIntExact(ENERGY_PER_RESTORATION_TICK);
+        return Math.toIntExact(energyPerRestorationTick());
+    }
+
+    public static long energyPerRestorationTick() {
+        long maxEnergyPerTick = Math.max(1L, Integer.MAX_VALUE / (long) FossilMultiblockStructure.TIME_TO_TAKE);
+        return Math.min(CobblemonChargedConfig.fossilAnalyzerEnergyPerRestorationTick(), maxEnergyPerTick);
     }
 
     public static long clampStoredEnergy(long amount) {
