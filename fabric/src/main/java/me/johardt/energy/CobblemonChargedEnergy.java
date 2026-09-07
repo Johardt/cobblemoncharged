@@ -23,5 +23,9 @@ public final class CobblemonChargedEnergy {
             (blockEntity, direction) -> ((PoweredFossilAnalyzer) (Object) blockEntity).getEnergyStorage(),
             CobblemonBlockEntities.FOSSIL_ANALYZER
         );
+        EnergyStorage.SIDED.registerForBlockEntity(
+            (blockEntity, direction) -> ((PoweredTMMachine) (Object) blockEntity).getEnergyStorage(),
+            CobblemonBlockEntities.TM_MACHINE
+        );
     }
 }

@@ -15,5 +15,8 @@ public final class CobblemonChargedCapabilities {
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, CobblemonBlockEntities.FOSSIL_ANALYZER, (blockEntity, direction) ->
             ((PoweredFossilAnalyzer) (Object) blockEntity).getEnergyStorage()
         );
+        event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, CobblemonBlockEntities.TM_MACHINE, (blockEntity, direction) ->
+            ((PoweredTMMachine) (Object) blockEntity).getEnergyStorage()
+        );
     }
 }

@@ -17,6 +17,7 @@ public final class CobblemonChargedConfig {
 
     private HealingMachine healingMachine = new HealingMachine();
     private FossilAnalyzer fossilAnalyzer = new FossilAnalyzer();
+    private TMMachine tmMachine = new TMMachine();
 
     private CobblemonChargedConfig() {
     }
@@ -48,6 +49,10 @@ public final class CobblemonChargedConfig {
         return INSTANCE.fossilAnalyzer.energyPerRestorationTick;
     }
 
+    public static long tmMachineEnergyPerProcessingTick() {
+        return INSTANCE.tmMachine.energyPerProcessingTick;
+    }
+
     private static CobblemonChargedConfig defaults() {
         return new CobblemonChargedConfig().validated();
     }
@@ -69,6 +74,11 @@ public final class CobblemonChargedConfig {
         }
         fossilAnalyzer.validated();
 
+        if (tmMachine == null) {
+            tmMachine = new TMMachine();
+        }
+        tmMachine.validated();
+
         return this;
     }
 
@@ -85,6 +95,14 @@ public final class CobblemonChargedConfig {
 
         private void validated() {
             energyPerRestorationTick = Math.clamp(energyPerRestorationTick, 1L, Integer.MAX_VALUE);
+        }
+    }
+
+    private static final class TMMachine {
+        private long energyPerProcessingTick = 200L;
+
+        private void validated() {
+            energyPerProcessingTick = Math.clamp(energyPerProcessingTick, 1L, Integer.MAX_VALUE);
         }
     }
 }

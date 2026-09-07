@@ -15,6 +15,9 @@ On first launch, the mod creates `config/cobblemoncharged.json` on both Fabric a
   },
   "fossilAnalyzer": {
     "energyPerRestorationTick": 20
+  },
+  "tmMachine": {
+    "energyPerProcessingTick": 200
   }
 }
 ```

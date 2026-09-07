@@ -6,7 +6,9 @@
     "HealingMachineBlockEntityMixin",
     "FossilAnalyzerBlockEntityMixin",
     "FossilMultiblockStructureMixin",
-    "MultiblockEntityMixin"
+    "MultiblockEntityMixin",
+    "TMMachineBlockEntityMixin",
+    "TMMachineTickerMixin"
   ],
   "injectors": {
     "defaultRequire": 1
